@@ -19,59 +19,63 @@ export default async function ProjectPage({
 
   if (!project) notFound();
 
+  const paragraphs = project.description.split("\n\n");
+
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 font-sans dark:bg-black">
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-24 sm:px-10">
-        <Link
-          href="/"
-          className="text-sm font-medium text-zinc-500 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+    <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-24 sm:px-10 sm:py-32">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 font-mono text-xs tracking-wide text-zinc-500 uppercase transition-colors hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+      >
+        ← All projects
+      </Link>
+
+      <h1 className="mt-6 font-display text-4xl font-medium tracking-tight text-transparent sm:text-5xl bg-clip-text bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-500 dark:from-white dark:via-zinc-200 dark:to-zinc-500">
+        {project.title}
+      </h1>
+      <p className="mt-4 text-lg leading-8 text-zinc-600 dark:text-zinc-400">
+        {project.summary}
+      </p>
+
+      <ul className="mt-6 flex flex-wrap gap-2">
+        {project.stack.map((tech) => (
+          <li
+            key={tech}
+            className="rounded-full bg-zinc-900/[.04] px-2.5 py-1 font-mono text-xs text-zinc-700 dark:bg-white/[.06] dark:text-zinc-300"
+          >
+            {tech}
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-6 flex gap-5 text-sm font-medium">
+        <a
+          href={project.repoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-zinc-900 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-500 dark:text-zinc-50 dark:decoration-zinc-700 dark:hover:decoration-zinc-400"
         >
-          ← All projects
-        </Link>
-
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-black dark:text-zinc-50">
-          {project.title}
-        </h1>
-        <p className="mt-3 text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-          {project.summary}
-        </p>
-
-        <ul className="mt-6 flex flex-wrap gap-2">
-          {project.stack.map((tech) => (
-            <li
-              key={tech}
-              className="rounded-full bg-black/[.04] px-2.5 py-1 text-xs text-zinc-700 dark:bg-white/[.06] dark:text-zinc-300"
-            >
-              {tech}
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-6 flex gap-4 text-sm font-medium">
+          Repository ↗
+        </a>
+        {project.liveUrl && (
           <a
-            href={project.repoUrl}
+            href={project.liveUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-black underline underline-offset-4 dark:text-zinc-50"
+            className="text-zinc-900 underline decoration-zinc-300 underline-offset-4 transition-colors hover:decoration-zinc-500 dark:text-zinc-50 dark:decoration-zinc-700 dark:hover:decoration-zinc-400"
           >
-            Repository
+            Live demo ↗
           </a>
-          {project.liveUrl && (
-            <a
-              href={project.liveUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-black underline underline-offset-4 dark:text-zinc-50"
-            >
-              Live demo
-            </a>
-          )}
-        </div>
+        )}
+      </div>
 
-        <div className="mt-10 whitespace-pre-line text-base leading-7 text-zinc-700 dark:text-zinc-300">
-          {project.description}
+      <div className="mt-10 rounded-2xl border border-black/[.06] bg-white/60 p-6 backdrop-blur-xl sm:p-8 dark:border-white/[.08] dark:bg-white/[.03]">
+        <div className="flex flex-col gap-5 text-base leading-7 text-zinc-700 dark:text-zinc-300">
+          {paragraphs.map((paragraph, i) => (
+            <p key={i}>{paragraph}</p>
+          ))}
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
