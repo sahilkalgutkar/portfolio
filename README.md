@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio
 
-## Getting Started
+Personal portfolio site. Project data is served through a self-hosted GraphQL
+API (Apollo Server, mounted as a Next.js Route Handler) backed by Supabase,
+instead of being hardcoded into components.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js** (App Router) — SSR, file-based routing, Route Handlers
+- **Apollo Server**, mounted at `/api/graphql` via `@as-integrations/next`
+- **Supabase** (Postgres) for project data, with a seed-data fallback (see below)
+- **Tailwind CSS**
+- **GitHub Actions** — lint, typecheck, build on every push/PR
+- **Vercel** for hosting, deployed via its GitHub integration
+
+## How the pieces fit together
+
+```
+app/api/graphql/route.ts   Apollo Server, mounted as a Route Handler
+graphql/schema.ts          typeDefs
+graphql/resolvers.ts       resolvers — read from Supabase, fall back to lib/projects.ts
+lib/supabase.ts            Supabase client (returns null if env vars unset)
+lib/graphql-client.ts      fetch() helper pages use to query /api/graphql
+app/page.tsx                home page — lists projects
+app/projects/[slug]/       per-project case study page
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Pages query `/api/graphql` over HTTP, the same way an external client would —
+you can hit the endpoint directly with any GraphQL client to explore the
+schema.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open http://localhost:3000. Without Supabase credentials set, the GraphQL
+resolvers fall back to the seed data in `lib/projects.ts`, so the site is
+fully functional out of the box.
 
-To learn more about Next.js, take a look at the following resources:
+## Connecting Supabase
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create a project at [supabase.com](https://supabase.com).
+2. Run `supabase/seed.sql` in the project's SQL editor to create and seed the
+   `projects` table.
+3. Copy `.env.local.example` to `.env.local` and fill in `SUPABASE_URL` and
+   `SUPABASE_ANON_KEY` from the project's API settings.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Push to GitHub and import the repo on [Vercel](https://vercel.com/new) —
+Vercel auto-deploys on every push to `main` once connected. Add
+`SUPABASE_URL` / `SUPABASE_ANON_KEY` as environment variables in the Vercel
+project settings.
