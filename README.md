@@ -19,15 +19,25 @@ instead of being hardcoded into components.
 app/api/graphql/route.ts   Apollo Server, mounted as a Route Handler
 graphql/schema.ts          typeDefs
 graphql/resolvers.ts       resolvers — read from Supabase, fall back to lib/projects.ts
+graphql/server.ts          shared ApolloServer instance
 lib/supabase.ts            Supabase client (returns null if env vars unset)
-lib/graphql-client.ts      fetch() helper pages use to query /api/graphql
+lib/graphql-client.ts      runs queries against the ApolloServer instance in-process
 app/page.tsx                home page — lists projects
 app/projects/[slug]/       per-project case study page
 ```
 
-Pages query `/api/graphql` over HTTP, the same way an external client would —
-you can hit the endpoint directly with any GraphQL client to explore the
-schema.
+Pages run queries in-process against the same `ApolloServer` instance mounted
+at `/api/graphql`, rather than making an HTTP round trip to the app's own API
+route during server rendering (self-fetching your own route from a server
+component is unreliable on serverless platforms). `/api/graphql` itself stays
+live as a real HTTP endpoint — hit it directly with any GraphQL client to
+explore the schema:
+
+```bash
+curl -X POST https://<your-deployment>/api/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ projects { title } }"}'
+```
 
 ## Local development
 
