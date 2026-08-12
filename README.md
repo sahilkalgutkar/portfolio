@@ -16,14 +16,18 @@ instead of being hardcoded into components.
 ## How the pieces fit together
 
 ```
-app/api/graphql/route.ts   Apollo Server, mounted as a Route Handler
+app/api/graphql/route.ts   Apollo Server, mounted as a Route Handler (CORS-enabled)
 graphql/schema.ts          typeDefs
 graphql/resolvers.ts       resolvers — read from Supabase, fall back to lib/projects.ts
 graphql/server.ts          shared ApolloServer instance
 lib/supabase.ts            Supabase client (returns null if env vars unset)
-lib/graphql-client.ts      runs queries against the ApolloServer instance in-process
-app/page.tsx                home page — lists projects
-app/projects/[slug]/       per-project case study page
+lib/graphql-client.ts      runs queries against the ApolloServer instance in-process (Vercel)
+lib/graphql-endpoint.ts    the Vercel /api/graphql URL, for the GitHub Pages build
+app/page.tsx                home page (Vercel) — force-dynamic, server-rendered
+app/projects/[slug]/       per-project case study page (Vercel) — force-dynamic
+components/ProjectList*    presentational + server (in-process) + client (fetch) variants
+components/ProjectDetail*  same split, for the case study page
+deploy/gh-pages/           page.tsx variants swapped in for the GitHub Pages build
 ```
 
 Pages run queries in-process against the same `ApolloServer` instance mounted
@@ -60,7 +64,39 @@ fully functional out of the box.
 
 ## Deploying
 
+### Vercel (primary)
+
 Push to GitHub and import the repo on [Vercel](https://vercel.com/new) —
 Vercel auto-deploys on every push to `main` once connected. Add
 `SUPABASE_URL` / `SUPABASE_ANON_KEY` as environment variables in the Vercel
 project settings.
+
+### GitHub Pages (static mirror)
+
+`.github/workflows/deploy-gh-pages.yml` publishes a second copy of the site
+to GitHub Pages at `https://<username>.github.io/portfolio/`. GitHub Pages
+only serves static files, so this build can't run `/api/graphql` itself —
+instead:
+
+- `app/api/graphql` is deleted before the build (a POST-based GraphQL route
+  can't be statically exported — see `next.config.ts`).
+- `app/page.tsx` and `app/projects/[slug]/page.tsx` are swapped for the
+  variants in `deploy/gh-pages/`, which fetch project data client-side, in
+  the browser, from the live Vercel deployment's `/api/graphql` over CORS
+  (see the `withCors` wrapper in `app/api/graphql/route.ts`) instead of
+  running the resolvers in-process.
+
+One-time setup:
+
+1. In the repo, go to **Settings → Pages** and set **Source** to **GitHub
+   Actions**.
+2. Go to **Settings → Secrets and variables → Actions → Variables** and add a
+   repository variable named `GRAPHQL_ENDPOINT` set to your Vercel
+   deployment's GraphQL URL, e.g. `https://your-app.vercel.app/api/graphql`.
+3. Push to `main` (or run the workflow manually) — it builds and deploys
+   automatically from there.
+
+`next.config.ts` assumes this repo is named `portfolio` and sets
+`basePath: "/portfolio"` accordingly for a project-page URL. If the repo is
+ever renamed to `<username>.github.io` (a user/org page, served at the
+domain root), remove the `basePath` line.

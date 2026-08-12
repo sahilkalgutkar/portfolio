@@ -1,0 +1,67 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Static export can't include app/api/graphql (GraphQL needs POST,
+      # which "output: export" doesn't support — see next.config.ts). The
+      # exported site calls the Vercel deployment's copy of that route
+      # instead, over CORS (see app/api/graphql/route.ts).
+      - run: rm -rf app/api
+
+      # Swap in the client-fetching page variants (deploy/gh-pages/) — see
+      # those files for why the Vercel-committed pages can't just branch on
+      # an env var here (route-segment config like `dynamic` must be a
+      # static literal, so force-dynamic and generateStaticParams can't
+      # coexist conditionally in one file).
+      - run: |
+          cp deploy/gh-pages/page.tsx app/page.tsx
+          cp "deploy/gh-pages/project-slug-page.tsx" "app/projects/[slug]/page.tsx"
+
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_STATIC_EXPORT: "true"
+          # Set this as a repository variable: Settings -> Secrets and
+          # variables -> Actions -> Variables -> New repository variable,
+          # named GRAPHQL_ENDPOINT, e.g. https://your-app.vercel.app/api/graphql
+          NEXT_PUBLIC_GRAPHQL_ENDPOINT: ${{ vars.GRAPHQL_ENDPOINT }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
