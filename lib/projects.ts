@@ -44,11 +44,30 @@ The system is a deliberately polyglot stack, each piece chosen for the job rathe
   {
     slug: "spliteasy",
     title: "SplitEasy",
-    summary: "Expense-splitting app for groups. Case study placeholder — swap in the real write-up.",
-    description:
-      "Placeholder description. Replace this with SplitEasy's actual architecture, the problem it solves, and the interesting engineering decisions — same treatment as the PipelineOps case study above.",
-    stack: ["TBD"],
-    repoUrl: "https://github.com/sahilkalgutkar/SplitEasy",
+    summary:
+      "Splitwise-style expense splitter for roommates and trip groups — equal/exact/percentage splits, a greedy min-cash-flow settle-up algorithm, and recurring bills that post themselves on a schedule.",
+    description: `Splitting group expenses fairly gets tedious fast once a trip or shared household has more than a couple of recurring costs — someone's tracking who paid for what in a group chat, and settling up means untangling a web of who-owes-who by hand. SplitEasy handles the whole loop: create a group, log expenses with equal, exact, or percentage splits, and get a settle-up plan that minimizes the number of payments needed to zero everyone out, instead of naively pairing every debtor with every creditor.
+
+The backend is NestJS + Prisma + PostgreSQL, with short-lived JWT access tokens paired with rotating refresh tokens stored as SHA-256 hashes — never the raw token — so a database leak alone can't be replayed. The standout piece is the settle-up algorithm: a hand-rolled max-heap greedy solver rather than a brute-force optimal search (settling group debt in the fewest possible transactions is NP-hard), with tests that assert the actual invariant — net effect per user must equal their original balance — rather than pinning exact output, so they still hold if the algorithm's internals change later. Recurring expenses (rent, subscriptions) post themselves via a NestJS cron job with a bounded catch-up loop for missed runs.
+
+The frontend is React + TypeScript + Vite + Tailwind, with TanStack Query for server state and a single axios interceptor handling silent access-token refresh — with single-flight de-duplication so concurrent 401s don't trigger a refresh stampede. Test coverage spans real unit tests for every service (Prisma mocked) plus a genuine end-to-end suite that drives the full HTTP stack — auth, groups, invites, expenses, balances, settle-up, recurring — against a real Postgres database, not mocks, wired into CI alongside the frontend's own Vitest suite covering the auth flow, the interceptor pipeline, and every API hook.`,
+    stack: [
+      "NestJS",
+      "Prisma",
+      "PostgreSQL",
+      "Passport JWT",
+      "React",
+      "TypeScript",
+      "Vite",
+      "Tailwind",
+      "TanStack Query",
+      "React Hook Form",
+      "Zod",
+      "Jest",
+      "Vitest",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/expense-splitter",
     liveUrl: null,
     featured: false,
   },

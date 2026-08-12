@@ -33,11 +33,18 @@ values
   (
     'spliteasy',
     'SplitEasy',
-    'Expense-splitting app for groups. Case study placeholder — swap in the real write-up.',
-    'Placeholder — replace with SplitEasy''s real architecture and description.',
-    array['TBD'],
-    'https://github.com/sahilkalgutkar/SplitEasy',
+    'Splitwise-style expense splitter for roommates and trip groups — equal/exact/percentage splits, a greedy min-cash-flow settle-up algorithm, and recurring bills that post themselves on a schedule.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['NestJS', 'Prisma', 'PostgreSQL', 'React', 'TypeScript', 'Vite', 'TanStack Query', 'Zod', 'Jest', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/expense-splitter',
     null,
     false
   )
-on conflict (slug) do nothing;
+on conflict (slug) do update set
+  title = excluded.title,
+  summary = excluded.summary,
+  description = excluded.description,
+  stack = excluded.stack,
+  "repoUrl" = excluded."repoUrl",
+  "liveUrl" = excluded."liveUrl",
+  featured = excluded.featured;
