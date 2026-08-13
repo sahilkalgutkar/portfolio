@@ -21,7 +21,50 @@ export const profile = {
   email: "sahilkal717@gmail.com",
   github: "https://github.com/sahilkalgutkar",
   linkedin: "https://linkedin.com/in/kalgutkarsahil",
+  photo: "/images/avatar.jpg",
+  resume: "/Sahil-Kalgutkar-Resume.pdf",
 };
+
+// Directly countable from the data below — not invented.
+export const stats: { value: string; label: string }[] = [
+  { value: "5+", label: "Years Experience" },
+  { value: "4", label: "Engineering Roles" },
+  { value: "3", label: "Certifications" },
+  { value: "2", label: "Degrees Earned" },
+];
+
+export type CoreSkill = {
+  name: string;
+  tier: "Expert" | "Advanced" | "Proficient";
+  years: string;
+};
+
+// Tiers are self-assessed, derived from how many roles/projects each
+// technology shows up in below (see `experience` and lib/projects.ts) —
+// not a precise measurement, just a relative signal like any resume's
+// skills section.
+export const coreSkills: CoreSkill[] = [
+  { name: "Java", tier: "Expert", years: "5+ yrs" },
+  { name: "Python", tier: "Expert", years: "5+ yrs" },
+  { name: "AWS", tier: "Expert", years: "4+ yrs" },
+  { name: "Spring Boot", tier: "Advanced", years: "3+ yrs" },
+  { name: "Kubernetes", tier: "Advanced", years: "3+ yrs" },
+  { name: "Docker", tier: "Advanced", years: "3+ yrs" },
+  { name: "PostgreSQL", tier: "Advanced", years: "3+ yrs" },
+  { name: "React / TypeScript", tier: "Advanced", years: "2+ yrs" },
+  { name: "Go", tier: "Proficient", years: "1+ yr" },
+  { name: "PyTorch", tier: "Proficient", years: "<1 yr" },
+];
+
+const TIER_FILL: Record<CoreSkill["tier"], number> = {
+  Expert: 95,
+  Advanced: 80,
+  Proficient: 60,
+};
+
+export function tierFill(tier: CoreSkill["tier"]): number {
+  return TIER_FILL[tier];
+}
 
 export const summary: string[] = [
   "Software engineer with 5+ years designing, building, and testing scalable, cloud-native backend services and platform tools used by internal teams and end customers.",

@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
     // <username>.github.io/portfolio — update this if the repo is renamed.
     basePath: "/portfolio",
     trailingSlash: true,
+    // Image Optimization needs a server, which static export doesn't have.
+    images: { unoptimized: true },
   }),
 };
 
