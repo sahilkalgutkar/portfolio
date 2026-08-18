@@ -1,5 +1,10 @@
 # Portfolio
 
+[![CI](https://github.com/sahilkalgutkar/portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/sahilkalgutkar/portfolio/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/sahilkalgutkar/portfolio/branch/main/graph/badge.svg)](https://codecov.io/gh/sahilkalgutkar/portfolio)
+[![patch coverage](https://img.shields.io/badge/patch%20coverage-min%2080%25-blue.svg)](codecov.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 My personal portfolio site. I built it on Next.js (App Router), and instead of hardcoding project data
 into components, I serve it through a self-hosted GraphQL API — Apollo Server, mounted as a Next.js Route
 Handler at `/api/graphql` via `@as-integrations/next` — backed by Supabase, with a seed-data fallback so

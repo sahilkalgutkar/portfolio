@@ -25,4 +25,15 @@ jobs:
       # 'LayoutProps'" on a clean checkout, so generate it explicitly first.
       - run: npx next typegen
       - run: npx tsc --noEmit
+
+      - name: Test
+        run: npm run test:cov
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+
       - run: npm run build
