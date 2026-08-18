@@ -71,4 +71,35 @@ The frontend is React + TypeScript + Vite + Tailwind, with TanStack Query for se
     liveUrl: null,
     featured: false,
   },
+  {
+    slug: "risk-signal-platform",
+    title: "Risk Signal Platform",
+    summary:
+      "Event-driven transaction risk-scoring platform on Java, Spring Boot, and Kafka — three services communicating only through events, with a full observability stack (Prometheus/Grafana, ELK) actually wired up and working.",
+    description: `Three Spring Boot services form one asynchronous pipeline: transaction-api accepts a transaction over REST and publishes it to Kafka; risk-scoring-service scores it against a set of independent, Spring-collected risk rules (amount threshold, merchant/account country mismatch, watchlisted country) and publishes the result; alert-service raises and dispatches an alert for anything above threshold. No service calls another directly — the only coupling is the event contracts in a shared module.
+
+Each service owns its own MySQL database and Flyway migration history rather than sharing one schema — a real bug caught while standing the stack up in Docker: with all three pointed at one database, the second and third services to boot failed Flyway's checksum validation, because every service's migration independently started at V1 with different SQL. All three follow the same durable-write-then-best-effort-publish shape (persist first, publish after, track publish failure in a column) with idempotent handling per transaction ID so a redelivered event is a no-op rather than a double-score or double-alert. A failed notification dispatch in alert-service retries on Kafka-native retry topics with backoff via \`@RetryableTopic\` before landing on a dead-letter topic — verified in an integration test that forces the failure and asserts the event actually reaches the DLT, not just that retry fires.
+
+Observability is a working system, not a checkbox: a custom Micrometer counter (\`risk_scores_total\`, tagged by risk level) feeds the main panel of a provisioned Grafana dashboard, and structured JSON logs from all three services are shipped through Filebeat into Elasticsearch, queryable in Kibana. Real integration tests spin up actual MySQL and Kafka via Testcontainers rather than mocking either, kept separate from the fast unit/web-slice suite via the Surefire/Failsafe split (\`mvn test\` vs \`mvn verify\`) so the everyday edit-test loop never needs Docker. Kubernetes manifests cover both a local kind cluster and the EKS path (RDS, MSK, OpenSearch).`,
+    stack: [
+      "Java",
+      "Spring Boot",
+      "Apache Kafka",
+      "MySQL",
+      "Flyway",
+      "Micrometer",
+      "Prometheus",
+      "Grafana",
+      "Elasticsearch",
+      "Kibana",
+      "Filebeat",
+      "Testcontainers",
+      "Docker Compose",
+      "Kubernetes",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/risk-signal-platform",
+    liveUrl: null,
+    featured: true,
+  },
 ];

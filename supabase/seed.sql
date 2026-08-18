@@ -40,6 +40,16 @@ values
     'https://github.com/sahilkalgutkar/expense-splitter',
     null,
     false
+  ),
+  (
+    'risk-signal-platform',
+    'Risk Signal Platform',
+    'Event-driven transaction risk-scoring platform on Java, Spring Boot, and Kafka — three services communicating only through events, with a full observability stack (Prometheus/Grafana, ELK) actually wired up and working.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Java', 'Spring Boot', 'Apache Kafka', 'MySQL', 'Flyway', 'Micrometer', 'Prometheus', 'Grafana', 'Elasticsearch', 'Kibana', 'Filebeat', 'Testcontainers', 'Docker Compose', 'Kubernetes', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/risk-signal-platform',
+    null,
+    true
   )
 on conflict (slug) do update set
   title = excluded.title,
