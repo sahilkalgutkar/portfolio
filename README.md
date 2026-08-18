@@ -1,17 +1,12 @@
 # Portfolio
 
-Personal portfolio site. Project data is served through a self-hosted GraphQL
-API (Apollo Server, mounted as a Next.js Route Handler) backed by Supabase,
-instead of being hardcoded into components.
+My personal portfolio site. I built it on Next.js (App Router), and instead of hardcoding project data
+into components, I serve it through a self-hosted GraphQL API — Apollo Server, mounted as a Next.js Route
+Handler at `/api/graphql` via `@as-integrations/next` — backed by Supabase, with a seed-data fallback so
+the site still works fully without any Supabase project configured (see below).
 
-## Stack
-
-- **Next.js** (App Router) — SSR, file-based routing, Route Handlers
-- **Apollo Server**, mounted at `/api/graphql` via `@as-integrations/next`
-- **Supabase** (Postgres) for project data, with a seed-data fallback (see below)
-- **Tailwind CSS**
-- **GitHub Actions** — lint, typecheck, build on every push/PR
-- **Vercel** for hosting, deployed via its GitHub integration
+Styling is Tailwind CSS. GitHub Actions runs lint, typecheck, and build on every push/PR, and Vercel
+hosts the site, deploying automatically via its GitHub integration.
 
 ## How the pieces fit together
 
@@ -30,12 +25,12 @@ components/ProjectDetail*  same split, for the case study page
 deploy/gh-pages/           page.tsx variants swapped in for the GitHub Pages build
 ```
 
-Pages run queries in-process against the same `ApolloServer` instance mounted
+I run page queries in-process against the same `ApolloServer` instance mounted
 at `/api/graphql`, rather than making an HTTP round trip to the app's own API
-route during server rendering (self-fetching your own route from a server
-component is unreliable on serverless platforms). `/api/graphql` itself stays
-live as a real HTTP endpoint — hit it directly with any GraphQL client to
-explore the schema:
+route during server rendering — self-fetching your own route from a server
+component is unreliable on serverless platforms. `/api/graphql` still stays
+live as a real HTTP endpoint, though — hit it directly with any GraphQL client
+to explore the schema:
 
 ```bash
 curl -X POST https://<your-deployment>/api/graphql \
@@ -73,10 +68,9 @@ project settings.
 
 ### GitHub Pages (static mirror)
 
-`.github/workflows/deploy-gh-pages.yml` publishes a second copy of the site
-to GitHub Pages at `https://<username>.github.io/portfolio/`. GitHub Pages
-only serves static files, so this build can't run `/api/graphql` itself —
-instead:
+`.github/workflows/deploy-gh-pages.yml` publishes a second copy of the site to
+GitHub Pages at `https://<username>.github.io/portfolio/`. GitHub Pages only
+serves static files, so I can't run `/api/graphql` on that build — instead:
 
 - `app/api/graphql` is deleted before the build (a POST-based GraphQL route
   can't be statically exported — see `next.config.ts`).
@@ -100,3 +94,7 @@ One-time setup:
 `basePath: "/portfolio"` accordingly for a project-page URL. If the repo is
 ever renamed to `<username>.github.io` (a user/org page, served at the
 domain root), remove the `basePath` line.
+
+## License
+
+[MIT](LICENSE)
