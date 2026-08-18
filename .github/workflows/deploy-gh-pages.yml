@@ -37,10 +37,14 @@ jobs:
       # those files for why the Vercel-committed pages can't just branch on
       # an env var here (route-segment config like `dynamic` must be a
       # static literal, so force-dynamic and generateStaticParams can't
-      # coexist conditionally in one file).
+      # coexist conditionally in one file). The Vercel pages' own tests
+      # assert on that `dynamic` export, which the swapped-in variants don't
+      # have, so drop those test files too — next build's typecheck would
+      # otherwise fail against the swapped file.
       - run: |
           cp deploy/gh-pages/page.tsx app/page.tsx
           cp "deploy/gh-pages/project-slug-page.tsx" "app/projects/[slug]/page.tsx"
+          rm -f app/page.test.tsx "app/projects/[slug]/page.test.tsx"
 
       - run: npm run build
         env:
