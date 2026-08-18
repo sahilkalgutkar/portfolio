@@ -14,6 +14,7 @@ create table if not exists projects (
 
 alter table projects enable row level security;
 
+drop policy if exists "projects are publicly readable" on projects;
 create policy "projects are publicly readable"
   on projects for select
   using (true);
