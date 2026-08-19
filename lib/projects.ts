@@ -102,4 +102,50 @@ Observability is a working system, not a checkbox: a custom Micrometer counter (
     liveUrl: null,
     featured: true,
   },
+  {
+    slug: "order-processing-platform",
+    title: "Order Processing Platform",
+    summary:
+      "Event-driven order processing in Go — a REST API publishes to SNS, fanning out to two independent SQS consumers (MongoDB reservations, simulated notifications), with Terraform for the AWS ECS Fargate path.",
+    description: `Three independently deployable Go services built around one integration pattern: order-service validates and persists an order to Postgres, then publishes an OrderCreated event to SNS. Two independent SQS subscribers pick it up — inventory-service applies a reservation rule and writes the result to MongoDB, notification-service logs a simulated notification — neither aware the other exists. One event, two consumers, no coordination between them.
+
+The handler layer depends on OrderStore/EventPublisher interfaces it defines itself rather than the concrete Postgres/SNS types, so the handler tests run against in-memory fakes with zero network calls, including a test asserting the specific behavior that a publish failure still returns 201 — the order is durable even if the event isn't, with the real gap (no reconciliation job for that case) documented rather than hidden. Domain logic (order validation, the reservation rule) is pure functions, table-tested independently of any transport or infrastructure. SNS→SQS subscriptions use raw message delivery so consumers unmarshal the event directly, and both consumers only delete their SQS message after their write succeeds, so a failed write leaves the message to retry rather than silently dropping it.
+
+Terraform (a reusable ECS Fargate service module plus SNS/SQS/least-privilege-IAM wiring) documents the AWS deployment path; Docker Compose with LocalStack standing in for SNS/SQS is what actually runs locally. CI runs a per-service matrix — vet, build, race-detector tests, Docker build — for all three services independently, matching how they'd deploy as separate ECS services.`,
+    stack: [
+      "Go",
+      "PostgreSQL",
+      "MongoDB",
+      "AWS SNS",
+      "AWS SQS",
+      "Terraform",
+      "Docker Compose",
+      "Prometheus",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/order-processing-platform",
+    liveUrl: null,
+    featured: true,
+  },
+  {
+    slug: "grpc-catalog-platform",
+    title: "gRPC Catalog Platform",
+    summary:
+      "Two Go gRPC services sharing a buf-generated proto contract — catalog-service serves one implementation over both native gRPC and REST via grpc-gateway, calling pricing-service internally over gRPC for quantity-based pricing.",
+    description: `catalog-service and pricing-service demonstrate two things my other (Kafka/REST-based) projects don't: real service-to-service gRPC, and serving a single handler implementation over two transports at once. catalog-service's ProductService is registered directly against grpc-gateway's mux in-process (RegisterProductServiceHandlerServer, not the from-endpoint variant), so a REST request never makes a network hop back into the service's own gRPC port — one set of business logic, no self-loopback. GetProduct calls pricing-service's internal-only PricingService over gRPC for a quantity-based price, but only when a quantity is actually given, rather than always calling it and special-casing a zero-quantity response — one fewer network call on the common path, and one fewer way for the no-pricing case to accidentally depend on pricing-service being up.
+
+The two services share generated proto code from a single gen/ Go module (buf generate, buf.gen.yaml) instead of each vendoring its own copy, so the wire contract can't drift between them. catalog-service's pricing client forwards the caller's x-request-id onto the outgoing call, so pricing-service's own logging interceptor can correlate both services' logs for one end-to-end request. Tests for both services spin up the gRPC server on an in-memory bufconn listener rather than a real socket; catalog-service's tests go one step further and run a fake PricingServiceServer the same way, so GetProduct's pricing-call logic is exercised against a real gRPC call with a controllable response, not a mocked Go interface.`,
+    stack: [
+      "Go",
+      "gRPC",
+      "Protocol Buffers",
+      "grpc-gateway",
+      "buf",
+      "Docker Compose",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/grpc-catalog-platform",
+    liveUrl: null,
+    featured: true,
+  },
 ];

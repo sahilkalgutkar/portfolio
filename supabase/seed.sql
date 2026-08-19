@@ -50,6 +50,26 @@ values
     'https://github.com/sahilkalgutkar/risk-signal-platform',
     null,
     true
+  ),
+  (
+    'order-processing-platform',
+    'Order Processing Platform',
+    'Event-driven order processing in Go — a REST API publishes to SNS, fanning out to two independent SQS consumers (MongoDB reservations, simulated notifications), with Terraform for the AWS ECS Fargate path.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Go', 'PostgreSQL', 'MongoDB', 'AWS SNS', 'AWS SQS', 'Terraform', 'Docker Compose', 'Prometheus', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/order-processing-platform',
+    null,
+    true
+  ),
+  (
+    'grpc-catalog-platform',
+    'gRPC Catalog Platform',
+    'Two Go gRPC services sharing a buf-generated proto contract — catalog-service serves one implementation over both native gRPC and REST via grpc-gateway, calling pricing-service internally over gRPC for quantity-based pricing.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Go', 'gRPC', 'Protocol Buffers', 'grpc-gateway', 'buf', 'Docker Compose', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/grpc-catalog-platform',
+    null,
+    true
   )
 on conflict (slug) do update set
   title = excluded.title,
