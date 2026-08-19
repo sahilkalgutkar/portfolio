@@ -110,6 +110,16 @@ values
     'https://github.com/sahilkalgutkar/ledger-strangler-platform',
     null,
     true
+  ),
+  (
+    'advisor-match-service',
+    'Advisor Match Service',
+    'An AI-based client-advisor matching API — pandas/numpy preprocessing, PyTorch/Hugging Face embeddings, and hybrid Elasticsearch search behind a Flask API, measured against a hand-labeled eval set.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Python', 'Flask', 'PyTorch', 'Hugging Face Transformers', 'pandas', 'NumPy', 'Elasticsearch', 'Docker Compose', 'Terraform', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/advisor-match-service',
+    null,
+    true
   )
 on conflict (slug) do update set
   title = excluded.title,

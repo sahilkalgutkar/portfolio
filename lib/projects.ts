@@ -241,4 +241,28 @@ Balance updates against Cassandra go through a lightweight transaction (compare-
     liveUrl: null,
     featured: true,
   },
+  {
+    slug: "advisor-match-service",
+    title: "Advisor Match Service",
+    summary:
+      "An AI-based client-advisor matching API — pandas/numpy preprocessing, PyTorch/Hugging Face embeddings, and hybrid Elasticsearch search behind a Flask API, measured against a hand-labeled eval set.",
+    description: `I built this to work back through an AI-based matching system the way I first built one during an internship — pairing clients with the right subject-matter expert from free text describing what they need — except this time with real infrastructure behind it instead of a notebook. A pandas/numpy pipeline cleans a raw CSV of advisor profiles (inconsistent whitespace, years-of-experience entered as "12 yrs" or "N/A", the same advisor entered twice under a different id); a small sentence-transformers model turns each bio into a 384-dim embedding with a real PyTorch forward pass; Elasticsearch indexes the result and matches with hybrid search — kNN over the embedding blended with BM25 in the same request — rather than pure vector search, since a client's query might share vocabulary with an advisor's bio without being semantically identical, or vice versa.
+
+A hand-labeled eval harness measures whether any of this actually works: 10 hand-paraphrased queries against the seed dataset, checking whether the intended advisor shows up in the top-k results and where — 90% hit@5, MRR 0.90 on the current dataset, a real measured number from the test suite rather than an assumed one. Smoke-testing the real docker-compose stack (not just the test suite) caught a genuine race condition: two Gunicorn workers both trying to create the Elasticsearch index on boot, with the loser crashing on a resource_already_exists_exception. Terraform provisions the target GCP environment — Artifact Registry and a Cloud Run service sized for PyTorch and the embedding model.`,
+    stack: [
+      "Python",
+      "Flask",
+      "PyTorch",
+      "Hugging Face Transformers",
+      "pandas",
+      "NumPy",
+      "Elasticsearch",
+      "Docker Compose",
+      "Terraform",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/advisor-match-service",
+    liveUrl: null,
+    featured: true,
+  },
 ];
