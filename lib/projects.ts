@@ -211,4 +211,34 @@ That seed data doubles as the row shape to load into Supabase's projects table o
     liveUrl: null,
     featured: false,
   },
+  {
+    slug: "ledger-strangler-platform",
+    title: "Ledger Strangler Platform",
+    summary:
+      "A legacy core-banking monolith strangled into microservices behind a YARP facade — .NET Core, Cassandra, RabbitMQ, and a deliberately honest gap where one domain hasn't been migrated yet.",
+    description: `A legacy monolith starts out owning two domains in one process against one Postgres database: Accounts and Statements. A YARP-based Gateway sits in front as the strangler facade — the single place that decides, per request path, which side of the migration a request belongs on. Account CRUD and balance adjustments are already strangled off to a new Cassandra-backed AccountsService; Statements hasn't been migrated yet, so those requests still fall through to the legacy monolith, which still reads its own copy of account data to generate them.
+
+That's a deliberate, honest gap rather than a glossed-over one: an account created after the cutover has no statement history in the legacy database, because Statements is still reading local state the new service never writes to. Real strangler migrations live with exactly this kind of transitional inconsistency for however long it takes to reach the next domain. NotificationsService is the first thing that only exists because of the migration — it consumes an AccountBalanceChangedEvent off a durable RabbitMQ topic exchange and turns each one into a notification record, reacting to an event the old code was never able to produce.
+
+Balance updates against Cassandra go through a lightweight transaction (compare-and-swap on the current balance) with a bounded retry loop, since Cassandra has no cross-row ACID transactions to lean on — verified under real concurrent writers, not just the happy path. Every service ships structured JSON logs via Serilog into a shared Filebeat → Logstash → Elasticsearch → Kibana pipeline. Terraform provisions the target Azure environment (AKS, ACR, Log Analytics); an ArgoCD Application watches the Kubernetes manifests directly, so a cluster's state is pulled from git instead of pushed by hand. Shipped with a real git-flow history — feature branches merged via PR, a tagged release, and a hotfix for a routing gap found while testing locally, not one commit dumped on main.`,
+    stack: [
+      "C#",
+      ".NET Core",
+      "YARP",
+      "PostgreSQL",
+      "Cassandra",
+      "RabbitMQ",
+      "Entity Framework Core",
+      "Serilog",
+      "ELK Stack",
+      "Docker Compose",
+      "Terraform",
+      "Kubernetes",
+      "ArgoCD",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/ledger-strangler-platform",
+    liveUrl: null,
+    featured: true,
+  },
 ];

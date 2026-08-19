@@ -100,6 +100,16 @@ values
     'https://github.com/sahilkalgutkar/portfolio',
     null,
     false
+  ),
+  (
+    'ledger-strangler-platform',
+    'Ledger Strangler Platform',
+    'A legacy core-banking monolith strangled into microservices behind a YARP facade — .NET Core, Cassandra, RabbitMQ, and a deliberately honest gap where one domain hasn''t been migrated yet.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['C#', '.NET Core', 'YARP', 'PostgreSQL', 'Cassandra', 'RabbitMQ', 'Entity Framework Core', 'Serilog', 'ELK Stack', 'Docker Compose', 'Terraform', 'Kubernetes', 'ArgoCD', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/ledger-strangler-platform',
+    null,
+    true
   )
 on conflict (slug) do update set
   title = excluded.title,
