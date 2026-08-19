@@ -148,4 +148,67 @@ The two services share generated proto code from a single gen/ Go module (buf ge
     liveUrl: null,
     featured: true,
   },
+  {
+    slug: "kvforge",
+    title: "kvforge",
+    summary:
+      "In-memory key-value store engine built from scratch in Rust — a Redis-shaped RESP wire protocol, TTLs, an append-only log for crash durability, and a CLI client, on nothing but the standard library and tokio.",
+    description: `kvforge is a key-value store built from the network layer down rather than a wrapper around an existing engine: the storage core, the wire protocol clients speak to it, and the durability layer that lets it survive a crash, all written from scratch in Rust.
+
+The AOF durability format reuses the wire protocol itself — every logged write is encoded exactly the way it'd be sent over the network, so the same streaming decoder that parses TCP input also parses the log on replay. That gets a property a bespoke log format would need to earn separately for free: a truncated final entry from a crash mid-write decodes as "incomplete" rather than garbage, so replay stops cleanly at the last whole command. Expiry is lazy rather than swept by a background thread — a key past its TTL is skipped and removed the next time something touches it, trading a small amount of stale memory for one fewer moving part to get wrong.
+
+The async tokio TCP server handles concurrent connections against one shared store, verified end-to-end (not just unit-tested): a real server writes over a real socket, gets killed, and a second server boots against the same log file and replays the data back over a fresh connection. kvforge-cli, the REPL and one-shot client, never re-implements command parsing — it builds a request from raw tokens and hands it to the exact same parser the server calls on every inbound TCP request, so client and server can't quietly disagree about what a command means.`,
+    stack: [
+      "Rust",
+      "Tokio",
+      "Async I/O",
+      "Custom Binary Protocol",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/kvforge",
+    liveUrl: null,
+    featured: true,
+  },
+  {
+    slug: "digest-bot",
+    title: "DigestBot",
+    summary:
+      "RAG chatbot that answers questions over a rolling window of RSS/changelog feeds instead of a static, one-time-indexed corpus — built to work through the parts most RAG tutorials skip: freshness, dedup, and incremental indexing.",
+    description: `Most RAG tutorials index a fixed set of documents once and stop there. DigestBot works through the parts they skip: keeping the index fresh as new articles arrive, deduping across re-polls, and weighting retrieval toward what's recent instead of just what's semantically closest.
+
+The pipeline is five stages: ingest polls RSS feeds, extracts readable article text, and dedupes by GUID/URL; index chunks articles, embeds them, and stores them in a local vector DB with published_at and source metadata; retrieve blends vector similarity with a recency-decay weight, so a fresher, slightly-less-similar chunk can outrank an older, closer one; generate answers questions with forced citations back to source articles, and says so explicitly when retrieval comes back empty instead of guessing; eval runs a hand-built question/answer set to measure retrieval recall and citation correctness against the current index, rather than trusting it by feel.
+
+Every Anthropic/model call in the test suite is mocked, so the 34-test suite runs with zero API keys and zero network calls — CI can verify the retrieval and citation logic without ever touching a live model.`,
+    stack: [
+      "Python",
+      "RAG",
+      "Vector Search",
+      "Anthropic",
+      "pytest",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/digest-bot",
+    liveUrl: null,
+    featured: true,
+  },
+  {
+    slug: "portfolio",
+    title: "Portfolio",
+    summary:
+      "This site — a Next.js (App Router) portfolio backed by a self-hosted GraphQL API over Supabase, with a seed-data fallback so it runs fully offline with no external service configured.",
+    description: `This is the site you're looking at right now. It's a Next.js App Router app serving project data through an Apollo Server route handler backed by Supabase — but Supabase is optional, not required: when SUPABASE_URL/SUPABASE_ANON_KEY aren't configured, the same GraphQL resolvers fall back to the seed data in lib/projects.ts (this very file), so the site runs fully offline with zero external services wired up.
+
+That seed data doubles as the row shape to load into Supabase's projects table once a real database is connected, so the fallback path and the real path share one schema instead of drifting into two different shapes over time. The site deploys two ways from one codebase: a normal Vercel deployment with the live GraphQL API, and a static GitHub Pages mirror that can't run /api/graphql at all and so is built entirely against the seed-data fallback.`,
+    stack: [
+      "Next.js",
+      "Apollo Server",
+      "Supabase",
+      "Tailwind CSS",
+      "GitHub Actions",
+      "Vercel",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/portfolio",
+    liveUrl: null,
+    featured: false,
+  },
 ];

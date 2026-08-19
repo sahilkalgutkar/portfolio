@@ -70,6 +70,36 @@ values
     'https://github.com/sahilkalgutkar/grpc-catalog-platform',
     null,
     true
+  ),
+  (
+    'kvforge',
+    'kvforge',
+    'In-memory key-value store engine built from scratch in Rust — a Redis-shaped RESP wire protocol, TTLs, an append-only log for crash durability, and a CLI client, on nothing but the standard library and tokio.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Rust', 'Tokio', 'Async I/O', 'Custom Binary Protocol', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/kvforge',
+    null,
+    true
+  ),
+  (
+    'digest-bot',
+    'DigestBot',
+    'RAG chatbot that answers questions over a rolling window of RSS/changelog feeds instead of a static, one-time-indexed corpus — built to work through the parts most RAG tutorials skip: freshness, dedup, and incremental indexing.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Python', 'RAG', 'Vector Search', 'Anthropic', 'pytest', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/digest-bot',
+    null,
+    true
+  ),
+  (
+    'portfolio',
+    'Portfolio',
+    'This site — a Next.js (App Router) portfolio backed by a self-hosted GraphQL API over Supabase, with a seed-data fallback so it runs fully offline with no external service configured.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Next.js', 'Apollo Server', 'Supabase', 'Tailwind CSS', 'GitHub Actions', 'Vercel'],
+    'https://github.com/sahilkalgutkar/portfolio',
+    null,
+    false
   )
 on conflict (slug) do update set
   title = excluded.title,
