@@ -14,6 +14,33 @@ export type Project = {
 // table once a real Supabase project is wired up.
 export const seedProjects: Project[] = [
   {
+    slug: "raftlite",
+    title: "raftlite",
+    summary:
+      "The Raft consensus algorithm implemented from scratch in Go — elections, log replication, snapshots, dynamic membership — behind a replicated key-value store you can run, break, and watch recover.",
+    description: `I had already built a single-node storage engine (kvforge) and several services that assume a database stays up. raftlite is the question those projects let me skip: what happens when three machines have to agree, and one of them is dead, or lying, or was unreachable for the last ten minutes and doesn't know it yet. No hashicorp/raft, no etcd/raft — importing the algorithm would have left nothing to build — and no third-party dependencies at all: the wire codec, the write-ahead log and the metrics registry are all hand-written.
+
+The consensus core is a pure state machine that owns no sockets, no files and no clock. Time arrives through Tick, the network through Step, and everything it wants done leaves through Ready. That split is what makes the hard part testable: elections, log repair, snapshot installation and membership changes are driven from ordinary table tests against a simulated network with fixed message ordering, so a failure reproduces on the first try rather than one run in fifty. On top of it sits a runtime that performs side effects in the order Raft's safety proof requires — persist, then send, then apply — a crash-safe WAL that recovers cleanly from a write cut in half, an HTTP API where a follower redirects rather than proxies so clients learn the topology, and a raftctl CLI that finds the leader for you.
+
+Beyond the base algorithm it implements pre-vote and a leader lease, so a node that was partitioned away cannot depose a healthy leader on its return; the current-term no-op that makes a new leader's commit index trustworthy; single-server membership changes with non-voting learners so a cold replica cannot stall writes; and linearizable reads via ReadIndex, where a deposed leader refuses to answer rather than serving stale state.
+
+The chaos suite runs real nodes against real directories through random crashes, restarts and partitions, asserting one invariant: an acknowledged write is never lost. Around five thousand acknowledged writes survive forty rounds of random failures. Two bugs surfaced only once real processes had to talk over real sockets — a message field threaded through the algorithm but never encoded, and a lost snapshot leaving a follower stranded forever — both now fixed with tests that fail without the fix.`,
+    stack: [
+      "Go",
+      "Raft",
+      "Distributed Systems",
+      "Consensus",
+      "Custom Binary Protocol",
+      "Write-Ahead Log",
+      "Prometheus",
+      "Docker Compose",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/raftlite",
+    liveUrl: null,
+    featured: true,
+  },
+  {
     slug: "pipelineops",
     title: "PipelineOps",
     summary:

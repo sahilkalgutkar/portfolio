@@ -22,6 +22,16 @@ create policy "projects are publicly readable"
 insert into projects (slug, title, summary, description, stack, "repoUrl", "liveUrl", featured)
 values
   (
+    'raftlite',
+    'raftlite',
+    'The Raft consensus algorithm implemented from scratch in Go — elections, log replication, snapshots, dynamic membership — behind a replicated key-value store you can run, break, and watch recover.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Go', 'Raft', 'Distributed Systems', 'Consensus', 'Custom Binary Protocol', 'Write-Ahead Log', 'Prometheus', 'Docker Compose'],
+    'https://github.com/sahilkalgutkar/raftlite',
+    null,
+    true
+  ),
+  (
     'pipelineops',
     'PipelineOps',
     'Job-monitoring and alerting platform for scheduled data pipelines — cron jobs, Airflow DAGs, batch ETL — that pages the team before a stakeholder notices a silent failure.',
