@@ -14,6 +14,42 @@ export type Project = {
 // table once a real Supabase project is wired up.
 export const seedProjects: Project[] = [
   {
+    slug: "trust-platform",
+    title: "trust-platform",
+    summary:
+      "A multi-tenant identity and entitlements platform written from the protocol up — an OpenID Connect provider, a Zanzibar-style relationship-based authorization service, and an audit log that cannot be quietly edited.",
+    description: `I build identity and entitlements infrastructure at work, and I wanted a version of that I could actually hand to someone. So nothing here wraps Spring Security's OAuth support or an authorization SDK: the authorization code flow, PKCE verification, refresh-token rotation, JWT signing and verification, the permission engine and the audit hash chain are all written directly. The interesting part of this domain is the reasoning behind each rule, and you cannot demonstrate that by configuring somebody else's library.
+
+The identity service is an OpenID Connect provider with per-tenant RS256 signing keys, rotatable without invalidating tokens already in flight, and private halves wrapped in AES-256-GCM before they reach Postgres. The decision I care most about is refresh-token rotation: every refresh consumes the presented token and issues a new one carrying the same family id, and presenting an already-rotated token revokes the entire family. A stolen token therefore works only until the legitimate client refreshes once — after that, one of the two parties presents a consumed token. The provider cannot tell the thief from the victim, so it stops trusting the lineage rather than guessing. The legitimate user gets logged out, which is a real cost and the right one, because the alternative lets an attacker refresh indefinitely while the victim notices nothing.
+
+The authorization service follows Google's Zanzibar paper: permissions are not stored, they are derived. A namespace declares that a document's viewers are whoever holds viewer directly, plus everyone who is an editor, plus everyone who can view the parent folder — and a check walks that definition at query time over the relationship tuples. Move a document into a different folder and its access changes with it, because nothing about the document was ever written down. It supports usersets and nested groups, unions, intersections and exclusions, an expand API that renders the same rules as a tree (check answers yes or no, and "why" is the question an operator actually has at 3am), a Redis cache keyed by storage revision so any write invalidates everything earlier at once, and Zanzibar's consistency tokens for the read-your-own-writes problem. It never takes a tenant id from a URL: it reads the tid claim out of a token the identity service signed and uses that, so a caller cannot reach another tenant's data by editing a path.
+
+Both services publish security events through a transactional outbox — writing to a table in the same transaction as the thing being audited makes the record exactly as durable as the event, and turns a Kafka outage into latency rather than loss. The audit service consumes them and chains them with SHA-256 per tenant, and its verifier checks four distinct things, because there are four distinct ways to interfere with a log: rewriting a record breaks its hash; rewriting it and recomputing that hash breaks the next record's link; deleting a record leaves a gap the hashes alone would not notice; and editing only an indexed column is caught by comparing those columns against the signed payload. It is tamper-evidence, not tamper-proofing — someone who can rewrite the whole table can recompute the whole chain — which is why the chain head is its own endpoint, meant to be recorded somewhere the database cannot reach.
+
+Multi-tenancy is enforced in the generated SQL through Hibernate's tenant discriminator rather than in service code, and when no tenant is bound the resolver returns the nil UUID: the query still runs, and matches nothing. The isolation suite gives two tenants the same client id and the same user email on purpose, so any query that lost its predicate would return the other tenant's row and a test expecting a rejection would pass instead.
+
+431 tests at 92% line and 86% branch coverage. A large share are adversarial, and each is a published attack rather than an invented one — alg:none, HS256 forgery using the public key as the HMAC secret, PKCE downgrade, confused-deputy code redemption, stolen-token replay, open redirect, cross-tenant replay — and every one of them produces a request that parses. Two bugs only end-to-end testing could find: a revocation that rolled back with the very exception that rejected the replay, and audit timestamps hashed at nanosecond precision but stored at microsecond precision, which made an untampered chain fail verification.`,
+    stack: [
+      "Java 21",
+      "Spring Boot",
+      "OAuth 2.0",
+      "OpenID Connect",
+      "Zanzibar",
+      "PostgreSQL",
+      "Hibernate Multi-Tenancy",
+      "Flyway",
+      "Redis",
+      "Apache Kafka",
+      "Nimbus JOSE+JWT",
+      "Testcontainers",
+      "Docker Compose",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/trust-platform",
+    liveUrl: null,
+    featured: true,
+  },
+  {
     slug: "raftlite",
     title: "raftlite",
     summary:

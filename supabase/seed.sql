@@ -22,6 +22,16 @@ create policy "projects are publicly readable"
 insert into projects (slug, title, summary, description, stack, "repoUrl", "liveUrl", featured)
 values
   (
+    'trust-platform',
+    'trust-platform',
+    'A multi-tenant identity and entitlements platform written from the protocol up — an OpenID Connect provider, a Zanzibar-style relationship-based authorization service, and an audit log that cannot be quietly edited.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Java 21', 'Spring Boot', 'OAuth 2.0', 'OpenID Connect', 'Zanzibar', 'PostgreSQL', 'Hibernate Multi-Tenancy', 'Flyway', 'Redis', 'Apache Kafka', 'Nimbus JOSE+JWT', 'Testcontainers', 'Docker Compose', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/trust-platform',
+    null,
+    true
+  ),
+  (
     'raftlite',
     'raftlite',
     'The Raft consensus algorithm implemented from scratch in Go — elections, log replication, snapshots, dynamic membership — behind a replicated key-value store you can run, break, and watch recover.',
