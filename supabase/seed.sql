@@ -22,6 +22,16 @@ create policy "projects are publicly readable"
 insert into projects (slug, title, summary, description, stack, "repoUrl", "liveUrl", featured)
 values
   (
+    'queryforge',
+    'queryforge',
+    'A columnar SQL query engine written from the wire up in Rust — hand-written lexer, parser and binder, a cost-based optimiser, a vectorised execution engine, and its own on-disk format whose zone maps let a selective query skip most of the file without reading it.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Rust', 'SQL', 'Query Optimisation', 'Columnar Storage', 'Vectorised Execution', 'Zone Maps', 'Cost-Based Planning', 'External Sort', 'Hash Join', 'Zero Dependencies', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/queryforge',
+    null,
+    true
+  ),
+  (
     'tenant-operator',
     'tenant-operator',
     'A Kubernetes operator that turns "create a tenant" into something the cluster API understands — a custom resource, a reconcile loop that provisions a namespace with quota and network isolation, and admission webhooks that catch bad specs before they become bad conditions.',

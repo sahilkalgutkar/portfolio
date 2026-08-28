@@ -14,6 +14,41 @@ export type Project = {
 // table once a real Supabase project is wired up.
 export const seedProjects: Project[] = [
   {
+    slug: "queryforge",
+    title: "queryforge",
+    summary:
+      "A columnar SQL query engine written from the wire up in Rust — hand-written lexer, parser and binder, a cost-based optimiser, a vectorised execution engine, and its own on-disk format whose zone maps let a selective query skip most of the file without reading it.",
+    description: `I wanted to know what actually happens between typing a SQL query and getting rows back, so I wrote every stage of it: the lexer, the parser, the binder, a cost-based optimiser, a vectorised execution engine, and the columnar file format underneath all of it. Nothing is delegated. There is no sqlparser, no DataFusion, no Arrow, no Parquet — in fact no external crates at all, the whole workspace builds against the standard library — because an engine that wraps someone else's parser and someone else's columnar format has skipped the two places where the interesting decisions live.
+
+The format is where most of the performance comes from. A \`.qfc\` file groups column chunks into row groups and puts a footer at the end holding, for each chunk, its byte range, its encoding, and a zone map: the min, max, null count and distinct count of the values it holds. The footer's length is the last field before the trailing magic, so a reader seeks to \`len - 8\`, learns the entire layout in one more seek, and has not touched a byte of data yet. That is what turns predicate pushdown from a plan rewrite into skipped I/O — a query whose predicate falls outside a row group's range never reads that group's chunks, and a query touching two of forty columns reads two chunks per group. Measured on 500,000 rows in 8,192-row groups, a selective range comes back 155x faster than the same query on the unoptimised plan, reading 3 row groups out of 62; a full aggregate is 4.5x faster on projection pushdown alone.
+
+Each chunk chooses its own encoding by measuring the data rather than guessing from its type, because the right answer changes between row groups of the same column — an order_status column can hold two distinct values in one group and forty in the next. Two cheap signals decide it: average run length picks RLE, a low distinct-to-rows ratio picks a dictionary, and anything else stays plain. On the test fixtures RLE comes out more than 10x smaller than plain on a sorted column and a dictionary 4x smaller on a shuffled four-value string column, and both ratios are asserted in the suite rather than estimated.
+
+The optimiser runs four rules, and each has to preserve not just the rows a plan produces but the schema it produces them in — the second half is what makes them composable, since a rule may move a filter or reorder a join but the node above it must not be able to tell. The decisions I would defend in review are the ones where the rule deliberately declines to fire. Constant folding stops at division by zero and integer overflow, because folding those would let the plan-time answer differ from the run-time one, which is worse than not folding. A predicate is never pushed into the padded side of an outer join, since pushing a condition on the right side of a LEFT JOIN deletes rows that should have come back NULL-padded. Join reordering prefers a relation that has a join key to what is already joined over a smaller unrelated one, because an accidental cross product is not something a later choice recovers from, and it wraps the reordered join in a projection restoring the original column order so nothing above notices. Projection pushdown narrows every scan and renumbers every expression above it, which is the part that has to be exactly right — getting it wrong reads the wrong column and reports a plausible wrong answer.
+
+Execution is pull-based, which is not a style preference: it is what lets a LIMIT stop a scan after the first row group instead of running it to completion and discarding the rest. Expression kernels take whole columns with the operator resolved once outside the loop, and comparing a column against a literal has its own path so no constant column is materialised. Sorting has three modes — top-k when it feeds a LIMIT, so memory is bounded by the limit rather than the table; in-memory when everything fits; and an external merge over spilled runs when it does not, with a test asserting both paths return identical output because the answer must not depend on whether the input fitted in memory. The hash join builds the smaller side for inner joins, but on an outer join the choice is forced: the side that may be NULL-padded has to be the one that can be scanned for non-matches at the end.
+
+Three-valued logic is implemented properly throughout, because getting it wrong silently changes which rows come back rather than failing loudly. \`false AND NULL\` is false, since the row cannot match whatever the unknown turns out to be. \`5 IN (1, NULL)\` is unknown rather than false, since the NULL might have been 5. A NULL join key never matches, including against another NULL. \`sum\` over no rows is NULL rather than zero. And \`x / 0\` yields NULL instead of aborting, because one bad row should not kill a scan of a million.
+
+The benchmark measures the optimiser instead of asserting it: every query runs twice against the same data in the same process, once on the bound plan and once on the optimised one, and the run fails outright if the two disagree on the row count — a flattering speedup from a wrong answer is worse than no number at all. Running the example script also found a real bug the 43 end-to-end tests had missed: a LEFT JOIN with a non-equality in its ON clause applied that condition after deciding which rows had matched, so a preserved row whose only candidate failed the condition vanished instead of coming back padded. Every join test either had no residual condition or was an inner join, which is the argument for having an example you actually run. 542 tests at 97% line coverage, and the README records that bug and two others rather than quietly fixing them.`,
+    stack: [
+      "Rust",
+      "SQL",
+      "Query Optimisation",
+      "Columnar Storage",
+      "Vectorised Execution",
+      "Zone Maps",
+      "Cost-Based Planning",
+      "External Sort",
+      "Hash Join",
+      "Zero Dependencies",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/queryforge",
+    liveUrl: null,
+    featured: true,
+  },
+  {
     slug: "tenant-operator",
     title: "tenant-operator",
     summary:
