@@ -14,6 +14,39 @@ export type Project = {
 // table once a real Supabase project is wired up.
 export const seedProjects: Project[] = [
   {
+    slug: "tenant-operator",
+    title: "tenant-operator",
+    summary:
+      "A Kubernetes operator that turns \"create a tenant\" into something the cluster API understands — a custom resource, a reconcile loop that provisions a namespace with quota and network isolation, and admission webhooks that catch bad specs before they become bad conditions.",
+    description: `I have deployed onto Kubernetes for years, and every other project in this portfolio treats it the same way: as a place to put containers. tenant-operator goes the other direction. It is a controller that extends the cluster — a custom resource, a reconcile loop, admission webhooks, a finalizer — so that "create a tenant" becomes a thing the Kubernetes API itself knows how to do. A \`Tenant\` is one customer's slice of a cluster: eleven lines of YAML become a namespace with pod-security enforcement, a resource quota sized to the customer's tier, a default-deny network policy, a generated API key, a Deployment and a Service. The operator then keeps all of it that way.
+
+Ordering inside the loop is a correctness property rather than a style choice, and I wrote it in the order the failure modes demand. The finalizer is taken and persisted before anything is created, because a crash between "made a namespace" and "recorded that I own it" orphans the namespace with nothing left pointing at it. The quota and the network policy go in before the workload, because if the pods came up first there would be a window in which a tenant ran unquota'd and reachable from every other namespace — a small window, and an entirely avoidable one. And the Deployment is read back before anything is reported, because otherwise a Tenant would claim Ready the moment its Deployment object existed, whether or not a single pod ever started.
+
+I used a finalizer even though owner references would already delete the same objects, and the reason is what deletion is supposed to mean. Garbage collection is asynchronous and unordered: the Tenant would disappear from the API while its namespace was still terminating, and anything scripted around \`kubectl delete tenant\` would be racing the cleanup. With the finalizer, the object survives until the namespace has genuinely left the API, and reports Terminating throughout — a tenant that still reads as Ready halfway through its own teardown is actively misleading. Every write also goes through a single apply helper that refuses to adopt an object this operator did not create. Adoption looks convenient right up to the first time an operator silently rewrites a namespace another team was using, and the teardown path inherits the same rule, so a tenant pointed at somebody else's namespace will never delete it.
+
+Tiers are a table rather than branches in the reconcile loop: replica bounds, per-replica CPU and memory, namespace quota ceilings and delete protection all derive from one map, so adding a tier is a table entry and a test case. The quota deliberately covers the tier's replica ceiling plus one, so a tenant sitting at its maximum can still roll out a new version instead of deadlocking against its own quota mid-deploy. An unrecognised tier falls back to the most restrictive policy, because the CRD's enum makes that unreachable through the API — if one ever appears it came from a bug, and the safe answer to a bug is the smallest slice of the cluster rather than the largest. The credentials secret is the one deliberately non-idempotent piece: the API key is generated only if there is not one already, since rotating it every pass would still converge and would also pull the credential out from under a running workload every time anything about the tenant changed.
+
+The admission webhooks exist so that a mistake surfaces at apply time rather than as a condition someone has to go looking for. A \`:latest\` image is rejected outright — a mutable tag means the spec no longer describes what is running, and no amount of reconciliation can detect or correct that drift. Replicas above the tier ceiling are rejected rather than silently clamped, because running fewer replicas than the manifest says is invisible until it matters. The namespace is immutable, since moving it would orphan everything already provisioned. Reserved namespaces are refused, because the teardown path deletes the namespace it owns and a typo there would take out kube-system. And deleting an enterprise tenant requires a confirmation annotation, since that delete destroys somebody's data. The controller still applies its own defaults, so a cluster whose webhook is temporarily unavailable converges rather than reconciling an empty tier against a nil replica count.
+
+The control loop is tested against a real API server. envtest starts an actual kube-apiserver and etcd, and the suite drives the real reconciler through it: provisioning with guard rails, drift correction, tier upgrades, suspension, teardown, and the refusal to adopt. A fake client would happily accept objects a real API server rejects — an owner reference from a cluster-scoped Tenant to a namespaced Deployment, a second update to a Deployment whose immutable selector had been quietly rewritten — and those are exactly the mistakes worth catching. The drift cases are the ones that prove this is a controller rather than a provisioning script: hand-scale the Deployment, edit its image, delete the Service outright, and all three come back. envtest runs no kubelet and no deployment controller, so the tests stand in for those explicitly rather than papering over the gap, which keeps it obvious which behaviour belongs to the operator and which belongs to the cluster.`,
+    stack: [
+      "Go",
+      "Kubernetes",
+      "controller-runtime",
+      "Custom Resource Definitions",
+      "Admission Webhooks",
+      "Finalizers",
+      "Kustomize",
+      "cert-manager",
+      "envtest",
+      "Distroless",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/tenant-operator",
+    liveUrl: null,
+    featured: true,
+  },
+  {
     slug: "trust-platform",
     title: "trust-platform",
     summary:

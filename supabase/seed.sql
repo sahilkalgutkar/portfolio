@@ -22,6 +22,16 @@ create policy "projects are publicly readable"
 insert into projects (slug, title, summary, description, stack, "repoUrl", "liveUrl", featured)
 values
   (
+    'tenant-operator',
+    'tenant-operator',
+    'A Kubernetes operator that turns "create a tenant" into something the cluster API understands — a custom resource, a reconcile loop that provisions a namespace with quota and network isolation, and admission webhooks that catch bad specs before they become bad conditions.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Go', 'Kubernetes', 'controller-runtime', 'Custom Resource Definitions', 'Admission Webhooks', 'Finalizers', 'Kustomize', 'cert-manager', 'envtest', 'Distroless', 'GitHub Actions'],
+    'https://github.com/sahilkalgutkar/tenant-operator',
+    null,
+    true
+  ),
+  (
     'trust-platform',
     'trust-platform',
     'A multi-tenant identity and entitlements platform written from the protocol up — an OpenID Connect provider, a Zanzibar-style relationship-based authorization service, and an audit log that cannot be quietly edited.',
