@@ -22,6 +22,16 @@ create policy "projects are publicly readable"
 insert into projects (slug, title, summary, description, stack, "repoUrl", "liveUrl", featured)
 values
   (
+    'modelforge',
+    'modelforge',
+    'A model-serving platform in Go — a pure-Go XGBoost scorer verified against XGBoost itself, dynamic request batching worth 43x throughput, canary and shadow routing keyed per entity, and PSI drift detection over a sliding window.',
+    'See lib/projects.ts for the full write-up, or edit this row directly.',
+    array['Go', 'XGBoost', 'Model Serving', 'MLOps', 'Canary Deployments', 'Shadow Traffic', 'Dynamic Batching', 'Drift Detection', 'PSI', 'PostgreSQL', 'Prometheus', 'Grafana', 'Content-Addressed Storage', 'Differential Testing'],
+    'https://github.com/sahilkalgutkar/modelforge',
+    null,
+    true
+  ),
+  (
     'queryforge',
     'queryforge',
     'A columnar SQL query engine written from the wire up in Rust — hand-written lexer, parser and binder, a cost-based optimiser, a vectorised execution engine, and its own on-disk format whose zone maps let a selective query skip most of the file without reading it.',

@@ -14,6 +14,46 @@ export type Project = {
 // table once a real Supabase project is wired up.
 export const seedProjects: Project[] = [
   {
+    slug: "modelforge",
+    title: "modelforge",
+    summary:
+      "A model-serving platform in Go — a pure-Go XGBoost scorer verified against XGBoost itself, dynamic request batching worth 43x throughput, canary and shadow routing keyed per entity, and PSI drift detection over a sliding window.",
+    description: `I wanted the layer *underneath* the machine-learning projects I had already built, the one that decides which version of a model answers a request, groups concurrent requests into a single forward pass, and notices when the inputs have stopped looking like the data the model was trained on. So modelforge is a serving platform rather than a model: a registry, a scorer, a router, and a drift monitor.
+
+I wrote the scorer rather than shelling out to a Python process, and rather than binding to libxgboost through cgo. The reason is that everything the serving layer offers — rolling back to a previous version, shadowing a candidate against production, reproducing a prediction somebody is disputing — is only true if the artifact behind a version cannot change. A C++ shared library on that path would mean the artifact's behaviour depended on which libxgboost the host happened to have, and cross-compiling the static binary would stop working. Pure Go keeps CGO_ENABLED=0 and makes the artifact the only thing that decides what a version predicts.
+
+The correctness of that scorer is established by differential testing rather than by assertion. A Python script trains seven models covering binary logistic, missing values, squared-error regression, Poisson, multi-class softprob and softmax, and records the margins and probabilities XGBoost itself produces for a fixed input matrix; the Go scorer has to reproduce both. Margins are compared as well as probabilities on purpose, because a sigmoid squashes margins of 12 and 14 to 0.999994 and 0.999999 — a probability-only comparison would pass with a materially wrong margin on exactly the confident rows a threshold depends on most.
+
+That test found a bug I would never have found by reading the format. XGBoost compares a feature against a split threshold in float32, and writes split_conditions to JSON at float32 precision, so a threshold reads back as -0.3775961 while the feature value that produced it — a float32 widened to float64 — is -0.37759611010551453. Compared as float64 those differ and the row goes left; compared as float32 they are the same number, the comparison is false, and it goes right, which is what XGBoost does. It only matters for a row sitting exactly on a threshold, but thresholds are chosen from training values, so rows land on them constantly: one row in 64 in the binary fixture, seven in the regression one. The symptom is the worst kind there is — predictions correct for about 99% of traffic and quietly wrong for the rest, with nothing downstream able to tell. The second finding was that base_score lives in two different spaces, prediction space for single-output models and margin space for multi-class, which is why the binary fixture deliberately uses a base_score other than 0.5: logit(0.5) is zero, and would make an intercept applied in the wrong space look correct.
+
+Batching is where the throughput comes from. Scoring one row of a boosted model is about a microsecond, while the HTTP handling, decoding, routing and metrics around it are considerably more, so under concurrent load it is the per-call overhead and not the arithmetic that sets throughput. Measured against a scorer with 200 microseconds of fixed per-call cost and 320 concurrent callers, batch size 1 costs 59.5µs/op and batch size 64 costs 1.38µs/op — a 43x difference. The design decision that matters is that the batching window opens when the first request of a batch arrives rather than on a fixed tick. A ticker looks equivalent and is not: a request arriving just after a tick waits a full interval, the tick fires on an empty queue when traffic is light, and the latency added belongs to the clock rather than to the request. Opening it per batch makes the delay a genuine ceiling, so an idle system answers a lone request after exactly one window and a busy one dispatches full batches without waiting at all. Requests whose caller has already given up are dropped before scoring rather than after, because the load that makes clients time out is exactly when the wasted capacity matters, and a batch is scored under its own context rather than any caller's, so one client cancelling does not fail the unrelated requests batched with it.
+
+Rolling a model out is meant to be gradual and reversible. Canary assignment is a deterministic hash of a caller-supplied entity key, so the same user always reaches the same version while the policy is unchanged — if a user flipped between control and candidate from request to request, every per-user metric would mix both models and the experiment would measure nothing. The model name is mixed into that hash too, because otherwise an entity in the canary bucket for one model would be in the canary bucket for every model, correlating experiments that are supposed to be independent. A shadow version receives a copy of every request on its own goroutine with its own context; inheriting the request's context would kill the shadow the moment the handler returned, which is to say on nearly every request, and running it inline would put the candidate's latency directly into production's. And a rollout guard removes a version whose error rate crosses a threshold, but only after a minimum sample, because the first request to fail puts a version at a 100% error rate and the start of a rollout is the smallest sample there is. It sets the weight to zero rather than deleting the route, so an operator can see that a version was pulled rather than guessing why it is absent, and it will never remove the last version receiving traffic: turning "this version is failing" into "this model serves nothing" is strictly worse, because there is nothing left to fall back to.
+
+Drift detection is PSI over quantile bins, computed on a sliding ring of bin counts rather than retained samples, so memory depends on the window and the bin count rather than on how busy the service is — keeping raw values would make watching a service more expensive the busier it got, which is exactly backwards. Writing the test for empty bins found a second real bug: bins are half-open, so a quantile edge equal to the smallest sample creates a first bin no value can ever fall into, whose expected proportion is zero and whose PSI term is undefined. That is not theoretical — it is the ordinary shape of any feature that is zero for most rows, which is most counts and most amounts. Missing values are counted separately instead of binned, because a feature that becomes 40% NaN is a serious problem and folding those rows into a bucket would both hide it and shift the value distribution as the missing rate changed, reporting a broken pipeline as a change in the values.
+
+The suite requires a real Postgres and fails rather than skips when it is missing, because a suite that skips its own dependency keeps CI green while testing nothing, and CI greps its own output for skip markers to make sure that cannot regress silently. A second CI job reinstalls XGBoost, regenerates the fixtures from scratch and re-runs the parity tests, comparing predictions rather than files — retraining produces different trees, and the claim under test is that the Go scorer agrees with XGBoost, not that training is reproducible. Coverage is 90.5% of internal packages, and every command and number in the README, including the drift table and the batching figures, was run against a live server before being written down. So is the list of known limitations: only gbtree models, no eviction so the working set must fit in memory, drift on the first output only for multi-class models, a guard that catches errors rather than quality, and no authentication on the admin API.`,
+    stack: [
+      "Go",
+      "XGBoost",
+      "Model Serving",
+      "MLOps",
+      "Canary Deployments",
+      "Shadow Traffic",
+      "Dynamic Batching",
+      "Drift Detection",
+      "PSI",
+      "PostgreSQL",
+      "Prometheus",
+      "Grafana",
+      "Content-Addressed Storage",
+      "Differential Testing",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/modelforge",
+    liveUrl: null,
+    featured: true,
+  },
+  {
     slug: "queryforge",
     title: "queryforge",
     summary:
