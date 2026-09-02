@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:cov": "vitest run --coverage"
+    "test:cov": "vitest run --coverage",
+    "seed:generate": "node scripts/generate-seed.ts"
   },
   "dependencies": {
     "@apollo/server": "^5.5.1",
