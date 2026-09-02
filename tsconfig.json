@@ -6,6 +6,10 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // scripts/generate-seed.ts runs under `node scripts/generate-seed.ts`,
+    // and Node's native type stripping does no extension resolution, so its
+    // import of lib/projects.ts has to name the .ts extension explicitly.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
