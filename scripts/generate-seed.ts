@@ -69,6 +69,18 @@ on conflict (slug) do update set
 
 delete from projects
 where slug <> all (${arr(projects.map((p) => p.slug))});
+
+-- Encoding self-check. The write-ups contain em dashes; if this file reaches
+-- the server through a non-UTF-8 client every one of them arrives as mojibake
+-- and the corruption is invisible until you read the rendered page. Written as
+-- an ASCII Unicode escape on purpose, so the check itself cannot be mangled by
+-- the very problem it detects.
+do $$
+begin
+  if not exists (select 1 from projects where position(U&'\\2014' in description) > 0) then
+    raise exception 'seed.sql: no em dash survived, so this was sent in the wrong encoding. The rows are now mis-encoded - re-copy the file as UTF-8 (on macOS: LC_ALL=en_US.UTF-8 pbcopy < supabase/seed.sql) and run it again.';
+  end if;
+end $$;
 `;
 }
 
