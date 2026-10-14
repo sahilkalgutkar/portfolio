@@ -14,6 +14,37 @@ export type Project = {
 // table once a real Supabase project is wired up.
 export const seedProjects: Project[] = [
   {
+    slug: "txrace",
+    title: "txrace",
+    summary:
+      "A Java tool that runs concurrent JDBC transactions one SQL statement at a time, walks the orders they could run in under a preemption bound, and reports any order whose outcome no serial run could produce — which found two races in my own OAuth provider.",
+    description: `Most race bugs in a backend live in service code rather than in the database: read a row, check something, write. Consume a token once, grant only while under a limit, keep at least one owner. That code quietly depends on an isolation level it does not have, and it passes every test, because tests send one request at a time. A stress test finds it only when the timing happens to line up, and when it does, it cannot tell you how.
+
+txrace takes the timing out of it. Every connection is a dynamic proxy, and every statement, commit and rollback passes through a gate that holds it until a scheduler releases it, each transaction on a thread of its own because a blocking JDBC call cannot be paused halfway. A schedule is a list of transaction numbers, one per step, and the scheduler replays it exactly: the same schedule gives the same trace every time. The explorer then walks every order the steps can take, the way the CHESS paper searches thread interleavings — without storing states, and under a bound on preemptions, because most real races need only one or two.
+
+The hard part was a statement that waits on a row lock held by a transaction the scheduler has parked. A naive scheduler hangs there forever. txrace asks the database who the step is waiting behind — pg_blocking_pids on PostgreSQL, H2's session views — and moves on, then lets every waiting step settle before the next one goes, so the trace is repeatable. Deadlocks needed one more thing: PostgreSQL checks a wait once, deadlock_timeout after it starts, so txrace waits that out after every new wait, and the same schedule always fails the same victim.
+
+There is no invariant to write. The serial orders are the reference: every order is compared against running the transactions one after another, and any ending no serial order produces is reported, the one with the fewest preemptions laid out as a two-column trace. The one rule that took thought is rollbacks. A transaction the database refused, by a serialization failure or a deadlock, left nothing behind and is compared as if it never ran; one that gave up by its own logic is part of the ending, because giving up on what it read is exactly how a non-repeatable read shows. That rule is what lets it tell PostgreSQL's isolation levels apart, and it reproduces Martin Kleppmann's Hermitage table for PostgreSQL, all 30 cells, from scheduled runs.
+
+Its real target was my own trust-platform. Its refresh grant read the token, checked it had not been consumed, and then consumed it. I replayed the SQL Hibernate actually sends, and txrace found the order where two concurrent refreshes both succeed and leave two live tokens in one family, which is exactly the state reuse detection exists to prevent. An integration test against real requests confirmed it, and the fix — a conditional UPDATE, with zero rows meaning a replay — went upstream. Modelling the code around the fix found a second race: revoking a family read the family's tokens and saved them revoked, so a token a refresh was issuing at that moment stayed live. A single bulk update was not enough either, and txrace showed that too.
+
+I benchmarked it honestly against a plain stress test, and on simple races a stress test does fine: released together, 1,000 trials find them on the first trial. The difference was a fix that looked right and was not, where the window is narrow — released together, the stress test caught it in 2 of 3,000 trials, and txrace on the second order it ran. And a passing check means every order within the bound ended like a serial one, not that the run got lucky. It is also a JUnit 5 test type, @RaceTest, whose failure message is the counterexample. 191 tests at 96% line coverage, against H2 and an embedded PostgreSQL 18 with no Docker needed.`,
+    stack: [
+      "Java 21",
+      "JDBC",
+      "PostgreSQL",
+      "H2",
+      "Concurrency",
+      "Isolation Levels",
+      "Systematic Testing",
+      "JUnit 5",
+      "GitHub Actions",
+    ],
+    repoUrl: "https://github.com/sahilkalgutkar/txrace",
+    liveUrl: null,
+    featured: true,
+  },
+  {
     slug: "modelforge",
     title: "modelforge",
     summary:
@@ -165,9 +196,11 @@ Both services publish security events through a transactional outbox — writing
 
 Multi-tenancy is enforced in the generated SQL through Hibernate's tenant discriminator rather than in service code, and when no tenant is bound the resolver returns the nil UUID: the query still runs, and matches nothing. The isolation suite gives two tenants the same client id and the same user email on purpose, so any query that lost its predicate would return the other tenant's row and a test expecting a rejection would pass instead.
 
-431 tests at 92% line and 86% branch coverage. A large share are adversarial, and each is a published attack rather than an invented one — alg:none, HS256 forgery using the public key as the HMAC secret, PKCE downgrade, confused-deputy code redemption, stolen-token replay, open redirect, cross-tenant replay — and every one of them produces a request that parses. Two bugs only end-to-end testing could find: a revocation that rolled back with the very exception that rejected the replay, and audit timestamps hashed at nanosecond precision but stored at microsecond precision, which made an untampered chain fail verification.
+438 tests at 92% line and 86% branch coverage. A large share are adversarial, and each is a published attack rather than an invented one — alg:none, HS256 forgery using the public key as the HMAC secret, PKCE downgrade, confused-deputy code redemption, stolen-token replay, open redirect, cross-tenant replay — and every one of them produces a request that parses. Two bugs only end-to-end testing could find: a revocation that rolled back with the very exception that rejected the replay, and audit timestamps hashed at nanosecond precision but stored at microsecond precision, which made an untampered chain fail verification.
 
-A third turned up when I made the compose stack's host ports configurable and ran the same smoke test against non-default ones. The issuer both services were built with was a hardcoded localhost:8081, so with the port moved the provider minted tokens claiming an issuer on a port nothing was listening on, and the authorization service — which compares the iss claim against the tenant's expected issuer, exactly as it should — refused them. Static checks were perfectly happy; only running the flow caught it. The issuer is what a token asserts to an outside caller rather than an internal address, so it now follows the published port, and the two services still derive it from one value because a token whose issuer disagrees with the verifier's is indistinguishable from a forged one.`,
+A third turned up when I made the compose stack's host ports configurable and ran the same smoke test against non-default ones. The issuer both services were built with was a hardcoded localhost:8081, so with the port moved the provider minted tokens claiming an issuer on a port nothing was listening on, and the authorization service — which compares the iss claim against the tenant's expected issuer, exactly as it should — refused them. Static checks were perfectly happy; only running the flow caught it. The issuer is what a token asserts to an outside caller rather than an internal address, so it now follows the published port, and the two services still derive it from one value because a token whose issuer disagrees with the verifier's is indistinguishable from a forged one.
+
+Rotation itself had a hole I only found by building a tool to look for it. The refresh grant read the token, checked that it had not been consumed, and then consumed it, so under READ COMMITTED a second refresh that read the token in between passed the same check: both requests left with live tokens in one family, and reuse detection never fired. Authorization codes had the same race. I modelled the grant in txrace by replaying the SQL Hibernate sends, confirmed it with an integration test that holds one redemption just before its commit and waits in pg_stat_activity until the real request is blocked behind it, and fixed it by consuming with UPDATE … WHERE consumed_at IS NULL, treating zero rows as a replay. The fix had a trap of its own: the request that loses still holds the row's lock until its transaction ends, so revoking the family from inside it would wait on itself forever, and the family is now revoked once the grant has rolled back. Reviewing that turned up the mirror image. Revoking a family read its tokens and saved them, so a refresh in flight at that moment left its new token live in a revoked family; revocation now repeats a bulk update until it changes nothing.`,
     stack: [
       "Java 21",
       "Spring Boot",
